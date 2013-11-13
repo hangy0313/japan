@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "math.h"
 #include "stdbool.h"
+#include "time.h"
 
 #include "bmpHeader.h"
 
@@ -13,6 +14,7 @@
 #define trainNum 175
 
 #define widthStartWrite 20
+#define writeNumPerColumn 15
 
 #define TRUE 1
 #define FALSE 0
@@ -24,6 +26,9 @@ void main()
 {
     struct bmpHeader bmpHeader;
     FILE *trainBmp, *testBmp, *fileList, *japan, *checkBmp;
+
+    clock_t startTime, endTime;
+    float executeTime = 0;
 
     unsigned char listFileCommand[120], trainFileName[23], testFileName[23], rmCommand[120];
 
@@ -121,9 +126,11 @@ void main()
 
     unsigned long dis, minDis, guessNum;
 
-    unsigned short bom, newLine = 0x000a, space = 32;
+    unsigned short bom, newLine = 0x000a, space = 32, printfSpaceNum;
 
     bool widthStart = TRUE;
+
+    startTime = clock();
     
     japan = fopen("japan.txt", "wb");
     bom = 0xff;
@@ -294,16 +301,28 @@ void main()
                 speechArrayCount +=2;
                 widthIndex += 2;
             }
-            for(speechArrayCount = 0;speechArrayCount < 12;speechArrayCount += 2){
+            printfSpaceNum = writeNumPerColumn-(segNum*2);
+            for(num = 0;num < printfSpaceNum;num++){
+                fwrite(&space, sizeof(unsigned short), 1, japan);
+            }
+            for(speechArrayCount = 0;speechArrayCount < 20;speechArrayCount += 2){
+                if(speechArray[speechArrayCount] == 32){
+                    fwrite(&newLine, sizeof(unsigned short), 1, japan);
+                    break;
+                }
                 fwrite(&speechArray[speechArrayCount], sizeof(unsigned short), 1, japan);
                 fwrite(&speechArray[speechArrayCount+1], sizeof(unsigned short), 1, japan);
 
                 fwrite(&space, sizeof(unsigned short), 1, japan);
             }
-            fwrite(&newLine, sizeof(unsigned short), 1, japan);
+//            fwrite(&newLine, sizeof(unsigned short), 1, japan);
             fclose(testBmp);
         }
     }
     fclose(fileList);
     fclose(japan);
+
+    endTime = clock();
+    executeTime = (endTime-startTime)/CLOCKS_PER_SEC;
+    printf("execute time: %f sec \n", executeTime);
 }
